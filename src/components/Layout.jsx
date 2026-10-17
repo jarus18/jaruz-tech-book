@@ -16,7 +16,7 @@ export default function Layout() {
     <>
       <header className="header">
         <div className="container header-inner">
-          <Link to="/" className="logo">📚 Kitob kutubxona</Link>
+          <Link to="/" className="logo">📖 Jamshidbek Rustamov kutubxonasi</Link>
           <form className="header-search" onSubmit={onSearch}>
             <input
               type="search"
