@@ -40,9 +40,9 @@ export default function Layout() {
       <main className="container main">
         <Outlet />
       </main>
-      <footer className="footer container muted">
-        Kutubxonadagi kitoblar mualliflik huquqi egalarining ruxsati bilan joylangan.
+     <footer className="footer">
+        <div className="container footer-inner">
+          <span className="muted">Kutubxonadagi kitoblar mualliflik huquqi egalarining ruxsati bilan joylangan.</span>
+          <strong>Jaruz Tech soft</strong>
+        </div>
       </footer>
-    </>
-  )
-}
