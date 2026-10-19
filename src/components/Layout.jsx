@@ -42,7 +42,7 @@ export default function Layout() {
       </main>
      <footer className="footer">
         <div className="container footer-inner">
-          <span className="muted">Kutubxonadagi kitoblar mualliflik huquqi egalarining ruxsati bilan joylangan.</span>
+          <span className="muted">Jaruz Tech soft</span>
           <strong>Jaruz Tech soft</strong>
         </div>
       </footer>
