@@ -1,99 +1,200 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { LANGUAGES, supabase } from '../lib/supabase'
-import { BookGrid } from '../components/BookCard'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
-export default function Catalog() {
-  const [params, setParams] = useSearchParams()
-  const q = params.get('q') ?? ''
-  const genre = params.get('janr') ?? ''
-  const lang = params.get('til') ?? ''
-  const sort = params.get('saralash') ?? 'new'
-
-  const [genres, setGenres] = useState([])
-  const [books, setBooks] = useState(null)
-  const [query, setQuery] = useState(q)
-
-  useEffect(() => setQuery(q), [q])
+export default function Katalog() {
+  const [categories, setCategories] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [books, setBooks] = useState([])
 
   useEffect(() => {
-    supabase.from('genres').select('*').order('name').then(({ data }) => setGenres(data ?? []))
+    fetchCategories()
+    fetchAllBooks()
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    setBooks(null)
-    async function load() {
-      let req = supabase
-        .from('books')
-        .select(genre ? '*, book_genres!inner(genre_id)' : '*')
-        .eq('is_published', true)
-      if (genre) req = req.eq('book_genres.genre_id', genre)
-      if (lang) req = req.eq('language', lang)
-      const term = q.replace(/[,()%]/g, ' ').trim()
-      if (term) req = req.or(`title.ilike.%${term}%,author.ilike.%${term}%,description.ilike.%${term}%`)
-      req = sort === 'title' ? req.order('title') : req.order('created_at', { ascending: false })
-      const { data } = await req.limit(200)
-      let list = data ?? []
-      if (sort === 'popular' && list.length) {
-        const { data: stats } = await supabase
-          .from('book_stats')
-          .select('book_id, readers')
-          .in('book_id', list.map((b) => b.id))
-        const readers = Object.fromEntries((stats ?? []).map((s) => [s.book_id, s.readers]))
-        list = [...list].sort((a, b) => (readers[b.id] ?? 0) - (readers[a.id] ?? 0))
-      }
-      if (!cancelled) setBooks(list)
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [q, genre, lang, sort])
+  // 1. Kategoriyalarni bazadan olish
+  async function fetchCategories() {
+    const { data } = await supabase.from('categories').select('*').order('name')
+    if (data) setCategories(data)
+  }
 
-  function update(key, value) {
-    const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    setParams(next)
+  // 2. Barcha kitoblarni yuklash
+  async function fetchAllBooks() {
+    setSelectedCategory(null)
+    const { data } = await supabase.from('books').select('*')
+    if (data) setBooks(data)
+  }
+
+  // 3. Tanlangan kategoriya bo'yicha kitoblarni yuklash
+  async function fetchBooksByCategory(category) {
+    setSelectedCategory(category)
+    const { data } = await supabase
+      .from('books')
+      .select('*')
+      .eq('category_id', category.id)
+    if (data) setBooks(data)
   }
 
   return (
-    <>
-      <h1>Katalog</h1>
-      <div className="filters">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            update('q', query.trim())
-          }}
-        >
-          <input
-            type="search"
-            placeholder="Nomi, muallifi yoki kalit so'z"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </form>
-        <select value={genre} onChange={(e) => update('janr', e.target.value)}>
-          <option value="">Barcha janrlar</option>
-          {genres.map((g) => (
-            <option key={g.id} value={g.id}>{g.name}</option>
-          ))}
-        </select>
-        <select value={lang} onChange={(e) => update('til', e.target.value)}>
-          <option value="">Barcha tillar</option>
-          {Object.entries(LANGUAGES).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-        <select value={sort} onChange={(e) => update('saralash', e.target.value === 'new' ? '' : e.target.value)}>
-          <option value="new">Avval yangilari</option>
-          <option value="popular">Eng ko'p o'qilgan</option>
-          <option value="title">Nomi bo'yicha (A-Z)</option>
-        </select>
+    <div style={{ width: '100%', minHeight: '100vh', background: '#F3F5F8', fontFamily: 'sans-serif', paddingBottom: '40px' }}>
+      
+      {/* ASOSIY KONTENT QISMI */}
+      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '30px 20px', boxSizing: 'border-box' }}>
+        
+        <div style={{ display: 'flex', gap: '25px', alignItems: 'flex-start' }}>
+          
+          {/* CHAP TOMON: Kategoriyalar paneli (Sidebar) */}
+          <div style={{ 
+            width: '260px', 
+            flexShrink: 0, 
+            background: '#FFFFFF', 
+            borderRadius: '16px', 
+            padding: '24px 18px', 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            border: '1px solid #E1E5EB'
+          }}>
+            <h3 style={{ fontSize: '20px', color: '#202938', margin: '0 0 20px 8px', fontWeight: '700' }}>
+              Kategoriyalar
+            </h3>
+            
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {/* Barcha kitoblar */}
+              <li 
+                onClick={fetchAllBooks}
+                style={{
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  borderRadius: '10px',
+                  marginBottom: '8px',
+                  background: selectedCategory === null ? '#1677FF' : 'transparent',
+                  color: selectedCategory === null ? '#FFFFFF' : '#202938',
+                  fontWeight: selectedCategory === null ? '600' : '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '15px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>📚</span> Barcha kitoblar
+              </li>
+
+              {/* Dinamik kategoriyalar */}
+              {categories.map((cat) => {
+                const isSelected = selectedCategory?.id === cat.id
+                return (
+                  <li
+                    key={cat.id}
+                    onClick={() => fetchBooksByCategory(cat)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      borderRadius: '10px',
+                      marginBottom: '8px',
+                      background: isSelected ? '#1677FF' : 'transparent',
+                      color: isSelected ? '#FFFFFF' : '#202938',
+                      fontWeight: isSelected ? '600' : '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '15px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>Ψ</span> {cat.name}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          {/* O'NG TOMON: Kitoblar katakchasi (Grid) */}
+          <div style={{ flexGrow: 1 }}>
+            
+            {/* Bo'lim sarlavhasi */}
+            <h2 style={{ fontSize: '24px', color: '#202938', margin: '0 0 20px 0', fontWeight: '700' }}>
+              Katalog: {selectedCategory ? selectedCategory.name : 'Barcha kitoblar'}
+            </h2>
+
+            {books.length === 0 ? (
+              <p style={{ color: '#657083', fontSize: '15px', marginTop: '20px' }}>
+                Ushbu bo'limda hozircha kitoblar mavjud emas.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '20px' }}>
+                {books.map((book) => (
+                  <div 
+                    key={book.id} 
+                    style={{ 
+                      background: '#FFFFFF', 
+                      borderRadius: '16px', 
+                      padding: '20px 16px', 
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+                      border: '1px solid #E1E5EB',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    {/* Kitob muqovasi (rasm yoki standart ramka) */}
+                    <div style={{ 
+                      width: '90px', 
+                      height: '120px', 
+                      background: '#F3F5F8', 
+                      borderRadius: '8px', 
+                      marginBottom: '15px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {book.cover_url ? (
+                        <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontSize: '32px' }}>📖</div>
+                      )}
+                    </div>
+
+                    {/* Kitob nomi va muallif */}
+                    <div style={{ width: '100%', marginBottom: '15px' }}>
+                      <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#202938', fontWeight: '700', lineHeight: '1.3' }}>
+                        {book.title}
+                      </h4>
+                      <p style={{ margin: 0, color: '#657083', fontSize: '13px' }}>
+                        {book.author}
+                      </p>
+                    </div>
+
+                    {/* O'qish tugmasi */}
+                    <a 
+                      href={book.file_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      style={{ 
+                        width: '100%',
+                        background: '#1677FF', 
+                        color: '#FFFFFF', 
+                        padding: '10px 0', 
+                        borderRadius: '10px', 
+                        textDecoration: 'none', 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'block',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      O'qish
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
-      <BookGrid books={books} empty="Hech narsa topilmadi." />
-    </>
+    </div>
   )
 }
