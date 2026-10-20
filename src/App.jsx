@@ -6,7 +6,7 @@ import Shelf from './pages/Shelf'
 import BookPage from './pages/BookPage'
 import Reader from './pages/Reader'
 import Login from './pages/Login'
-import Admin from './pages/Admin'
+import Admin from './pages/admin/admin'
 import NotFound from './pages/NotFound'
 
 export default function App() {
