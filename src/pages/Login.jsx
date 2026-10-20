@@ -64,7 +64,6 @@ export default function Login() {
           {busy ? 'Kuting...' : mode === 'login' ? 'Kirish' : "Ro'yxatdan o'tish"}
         </button>
       </form>
-      <button className="btn btn-outline" onClick={google}>Google orqali kirish</button>
       {message && <div className="notice">{message}</div>}
       <p className="muted">
         {mode === 'login' ? "Akkauntingiz yo'qmi? " : 'Akkauntingiz bormi? '}
