@@ -32,89 +32,129 @@ export default function Katalog() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h2 style={{ marginBottom: '20px' }}>Kutubxona Katalogi</h2>
-      
-      {/* Asosiy blok: chap va o'ng qism */}
-      <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+    <div style={{ width: '100%', minHeight: 'calc(100vh - 80px)', background: '#F3F5F8', padding: '30px 20px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        {/* CHAP TOMON: Kategoriyalar paneli */}
-        <div style={{ width: '280px', flexShrink: 0, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px' }}>
-          <h3 style={{ fontSize: '16px', marginBottom: '15px', color: '#1e293b' }}>📁 Bo'limlar</h3>
+        {/* Sahifa sarlavhasi */}
+        <h2 style={{ color: '#202938', fontSize: '24px', fontWeight: 'bold', marginBottom: '25px' }}>
+          Kutubxona Katalogi
+        </h2>
+        
+        {/* Asosiy qism: Chap va O'ng panel */}
+        <div style={{ display: 'flex', gap: '25px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            <li 
-              onClick={fetchAllBooks}
-              style={{
-                padding: '12px 15px',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                marginBottom: '8px',
-                background: selectedCategory === null ? '#2563eb' : 'transparent',
-                color: selectedCategory === null ? '#fff' : '#334155',
-                fontWeight: selectedCategory === null ? 'bold' : 'normal',
-              }}
-            >
-              📚 Barcha kitoblar
-            </li>
-
-            {categories.map((cat) => (
-              <li
-                key={cat.id}
-                onClick={() => fetchBooksByCategory(cat)}
+          {/* CHAP TOMON: Kategoriyalar paneli (Sidebar) */}
+          <div style={{ width: '280px', flexShrink: 0, background: '#FFFFFF', border: '1px solid #E1E5EB', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ fontSize: '16px', color: '#202938', marginBottom: '15px', fontWeight: '600' }}>
+              📁 Bo'limlar
+            </h3>
+            
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {/* Barcha kitoblar tugmasi */}
+              <li 
+                onClick={fetchAllBooks}
                 style={{
-                  padding: '12px 15px',
+                  padding: '12px 14px',
                   cursor: 'pointer',
                   borderRadius: '8px',
                   marginBottom: '8px',
-                  background: selectedCategory?.id === cat.id ? '#2563eb' : 'transparent',
-                  color: selectedCategory?.id === cat.id ? '#fff' : '#334155',
-                  fontWeight: selectedCategory?.id === cat.id ? 'bold' : 'normal',
+                  background: selectedCategory === null ? '#3478F6' : '#FFFFFF',
+                  color: selectedCategory === null ? '#FFFFFF' : '#202938',
+                  border: selectedCategory === null ? '1px solid #3478F6' : '1px solid #E1E5EB',
+                  fontWeight: selectedCategory === null ? '600' : 'normal',
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
                 }}
               >
-                📁 {cat.name}
+                📚 Barcha kitoblar
               </li>
-            ))}
-          </ul>
-        </div>
 
-        {/* O'NG TOMON: Kitoblar ro'yxati */}
-        <div style={{ flexGrow: 1 }}>
-          <h3 style={{ marginBottom: '20px', color: '#1e293b' }}>
-            {selectedCategory ? `📁 ${selectedCategory.name}` : '📚 Barcha kitoblar'}
-          </h3>
-
-          {books.length === 0 ? (
-            <p style={{ color: '#64748b' }}>Ushbu bo'limda hozircha kitoblar mavjud emas.</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
-              {books.map((book) => (
-                <div key={book.id} style={{ border: '1px solid #e2e8f0', padding: '18px', borderRadius: '10px', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>📖 {book.title}</h4>
-                  <p style={{ margin: '0 0 15px 0', color: '#64748b', fontSize: '13px' }}>Muallif: {book.author}</p>
-                  <a 
-                    href={book.file_url} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    style={{ 
-                      display: 'inline-block', 
-                      background: '#2563eb', 
-                      color: '#fff', 
-                      padding: '8px 16px', 
-                      borderRadius: '6px', 
-                      textDecoration: 'none', 
-                      fontSize: '13px',
-                      fontWeight: '500'
+              {/* Dinamik kategoriyalar (Oq fon, nozik chegara) */}
+              {categories.map((cat) => {
+                const isSelected = selectedCategory?.id === cat.id
+                return (
+                  <li
+                    key={cat.id}
+                    onClick={() => fetchBooksByCategory(cat)}
+                    style={{
+                      padding: '12px 14px',
+                      cursor: 'pointer',
+                      borderRadius: '8px',
+                      marginBottom: '8px',
+                      background: isSelected ? '#3478F6' : '#FFFFFF',
+                      color: isSelected ? '#FFFFFF' : '#202938',
+                      border: isSelected ? '1px solid #3478F6' : '1px solid #E1E5EB',
+                      fontWeight: isSelected ? '600' : 'normal',
+                      transition: 'all 0.2s ease',
+                      fontSize: '14px'
                     }}
                   >
-                    O'qish
-                  </a>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    📁 {cat.name}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
 
+          {/* O'NG TOMON: Kitoblar ro'yxati */}
+          <div style={{ flexGrow: 1, minWidth: '280px' }}>
+            <h3 style={{ marginBottom: '20px', color: '#202938', fontSize: '18px', fontWeight: '600' }}>
+              {selectedCategory ? `📁 ${selectedCategory.name}` : '📚 Barcha kitoblar'}
+            </h3>
+
+            {books.length === 0 ? (
+              <p style={{ color: '#657083', fontSize: '14px' }}>Ushbu bo'limda hozircha kitoblar mavjud emas.</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                {books.map((book) => (
+                  <div 
+                    key={book.id} 
+                    style={{ 
+                      background: '#FFFFFF', 
+                      border: '1px solid #E1E5EB', 
+                      padding: '20px', 
+                      borderRadius: '12px', 
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'transform 0.2s ease'
+                    }}
+                  >
+                    <div>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#202938', fontWeight: '600' }}>
+                        📖 {book.title}
+                      </h4>
+                      <p style={{ margin: '0 0 16px 0', color: '#657083', fontSize: '13px' }}>
+                        Muallif: {book.author}
+                      </p>
+                    </div>
+
+                    <a 
+                      href={book.file_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      style={{ 
+                        display: 'inline-block', 
+                        background: '#3478F6', 
+                        color: '#FFFFFF', 
+                        padding: '8px 16px', 
+                        borderRadius: '6px', 
+                        textDecoration: 'none', 
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        textAlign: 'center'
+                      }}
+                    >
+                      O'qish
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
     </div>
   )
