@@ -44,7 +44,6 @@ export default function Layout() {
 
       <footer className="footer">
         <div className="container footer-inner">
-          <span className="muted">Jaruz Tech soft</span>
           <strong>Jaruz Tech soft</strong>
         </div>
       </footer>
