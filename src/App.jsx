@@ -18,6 +18,7 @@ export default function App() {
         <Route path="shelf" element={<Shelf />} />
         <Route path="book/:id" element={<BookPage />} />
         <Route path="login" element={<Login />} />
+        <Route path="kirish" element={<Login />} />
         <Route path="admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Route>
