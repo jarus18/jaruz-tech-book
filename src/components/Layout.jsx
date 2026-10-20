@@ -37,12 +37,17 @@ export default function Layout() {
           </nav>
         </div>
       </header>
+
       <main className="container main">
         <Outlet />
       </main>
-     <footer className="footer">
+
+      <footer className="footer">
         <div className="container footer-inner">
           <span className="muted">Jaruz Tech soft</span>
           <strong>Jaruz Tech soft</strong>
         </div>
       </footer>
+    </>
+  )
+}
