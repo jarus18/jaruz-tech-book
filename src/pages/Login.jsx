@@ -29,10 +29,6 @@ export default function Login() {
     }
   }
 
-  function google() {
-    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
-  }
-
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   return (
@@ -46,8 +42,8 @@ export default function Login() {
           </label>
         )}
         <label>
-          Email
-          <input type="email" value={form.email} onChange={set('email')} required autoComplete="email" />
+          Email yoki Telefon
+          <input type="text" value={form.email} onChange={set('email')} required placeholder="email@domain.com" />
         </label>
         <label>
           Parol
@@ -76,8 +72,8 @@ export default function Login() {
 }
 
 function translateError(msg) {
-  if (msg.includes('Invalid login credentials')) return "Email yoki parol noto'g'ri."
-  if (msg.includes('already registered')) return "Bu email bilan allaqachon ro'yxatdan o'tilgan."
+  if (msg.includes('Invalid login credentials')) return "Email/Telefon yoki parol noto'g'ri."
+  if (msg.includes('already registered')) return "Bu akkaunt bilan allaqachon ro'yxatdan o'tilgan."
   if (msg.includes('Email not confirmed')) return 'Avval emailingizni tasdiqlang.'
   return msg
 }
