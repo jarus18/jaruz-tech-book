@@ -22,7 +22,8 @@ export default function App() {
         <Route path="admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Route>
-      <Route path="reader/:id" element={<Reader />} />
+      {/* BookPage ichidagi /oqish/:id havolasi uchun to'g'ri yo'nalish */}
+      <Route path="/oqish/:id" element={<Reader />} />
     </Routes>
   )
 }
