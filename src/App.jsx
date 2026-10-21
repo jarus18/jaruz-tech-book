@@ -20,10 +20,9 @@ export default function App() {
         <Route path="login" element={<Login />} />
         <Route path="kirish" element={<Login />} />
         <Route path="admin" element={<Admin />} />
-        <Route path="*" element={<NotFound />} />
       </Route>
-      {/* BookPage ichidagi /oqish/:id havolasi uchun to'g'ri yo'nalish */}
       <Route path="/oqish/:id" element={<Reader />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
