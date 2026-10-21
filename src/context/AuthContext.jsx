@@ -1,46 +1,39 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const AuthContext = createContext(null)
+const AuthContext = createContext({ user: null, loading: true })
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    // Получение текущей сессии
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
-    return () => sub.subscription.unsubscribe()
+
+    // Слушатель изменений авторизации
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    if (!session) {
-      setProfile(null)
-      return
-    }
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle()
-      .then(({ data }) => setProfile(data))
-  }, [session])
-
-  const value = {
-    session,
-    user: session?.user ?? null,
-    profile,
-    isAdmin: profile?.role === 'admin',
-    loading,
-    signOut: () => supabase.auth.signOut(),
-  }
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
-  return useContext(AuthContext)
+  const context = useContext(AuthContext)
+  if (!context) {
+    return { user: null, loading: false }
+  }
+  return context
 }
