@@ -135,11 +135,15 @@ export default function BookPage() {
         )}
 
         <div className="actions">
-          <Link to={user ? `/oqish/${book.id}` : '/kirish'} className="btn">
+          <a 
+            href={book.file_url} 
+            target="_blank" 
+            rel="noreferrer" 
+            className="btn"
+          >
             {progress ? `Davom ettirish (${progress.page}-bet)` : "O'qishni boshlash"}
-          </Link>
+          </a>
         </div>
-        {!user && <div className="muted small">O'qish uchun tizimga kiring.</div>}
 
         <div className="shelf-buttons">
           {Object.entries(SHELVES).map(([key, label]) => (
