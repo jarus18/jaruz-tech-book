@@ -1,158 +1,108 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
 
 export default function Admin() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [categories, setCategories] = useState([])
-  const [newCategory, setNewCategory] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [file, setFile] = useState(null)
-  const [busy, setBusy] = useState(false)
+  const [books, setBooks] = useState([])
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [notice, setNotice] = useState('')
 
+  // Admin huquqini yoki oddiy kirishni tekshirish
   useEffect(() => {
-    fetchCategories()
-  }, [])
+    if (!user) {
+      navigate('/kirish')
+      return
+    }
+    fetchData()
+  }, [user, navigate])
 
-  async function fetchCategories() {
-    const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data)
+  async function fetchData() {
+    // Kategoriyalarni olish
+    const { data: catData } = await supabase.from('categories').select('*').order('name')
+    if (catData) setCategories(catData)
+
+    // Kitoblarni olish
+    const { data: bookData } = await supabase.from('books').select('*').order('created_at', { ascending: false })
+    if (bookData) setBooks(bookData)
   }
 
+  // Yangi kategoriya qo'shish
   async function handleAddCategory(e) {
     e.preventDefault()
-    if (!newCategory.trim()) return
+    if (!newCategoryName.trim()) return
 
-    const { error } = await supabase.from('categories').insert([{ name: newCategory.trim() }])
-    if (!error) {
-      setNewCategory('')
-      fetchCategories()
-      alert("Kategoriya muvaffaqiyatli qo'shildi!")
+    const { error } = await supabase.from('categories').insert({ name: newCategoryName.trim() })
+    if (error) {
+      setNotice('Xatolik: ' + error.message)
     } else {
-      alert("Xatolik: " + error.message)
+      setNewCategoryName('')
+      setNotice('Kategoriya muvaffaqiyatli qo\'shildi!')
+      fetchData()
     }
   }
 
-  async function handleAddBook(e) {
-    e.preventDefault()
-    if (!file || !selectedCategory) return alert("Kategoriya va kitob faylini tanlang!")
-
-    setBusy(true)
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}.${fileExt}`
-    
-    const { error: storageError } = await supabase.storage
-      .from('books_pdf')
-      .upload(fileName, file)
-
-    if (storageError) {
-      setBusy(false)
-      return alert("Fayl yuklashda xatolik: " + storageError.message)
-    }
-
-    const { data: publicUrlData } = supabase.storage.from('books_pdf').getPublicUrl(fileName)
-
-    const { error: dbError } = await supabase.from('books').insert([
-      {
-        title,
-        author,
-        file_url: publicUrlData.publicUrl,
-        category_id: selectedCategory
-      }
-    ])
-
-    setBusy(false)
-    if (!dbError) {
-      setTitle('')
-      setAuthor('')
-      setFile(null)
-      alert("Kitob muvaffaqiyatli qo'shildi!")
+  // Kategoriyani o'chirish
+  async function handleDeleteCategory(id) {
+    if (!window.confirm('Haqiqatan ham bu kategoriyani o\'chirmoqchimisiz?')) return
+    const { error } = await supabase.from('categories').delete().eq('id', id)
+    if (error) {
+      setNotice('O\'chirishda xatolik: ' + error.message)
+    } else {
+      setNotice('Kategoriya o\'chirildi.')
+      fetchData()
     }
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '30px auto', padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #E1E5EB' }}>
-      <h1 style={{ color: '#202938', marginBottom: '20px' }}>Admin Panel</h1>
+    <div className="admin-page" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+      <h1>Admin Panel</h1>
+      {notice && <div className="notice" style={{ margin: '10px 0', color: '#3478F6' }}>{notice}</div>}
 
-      {/* Kategoriya qo'shish */}
-      <section style={{ marginBottom: '30px', padding: '20px', background: '#F3F5F8', borderRadius: '8px' }}>
-        <h3 style={{ color: '#202938', marginTop: 0 }}>Yangi Kategoriya (Bo'lim) yaratish</h3>
-        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px' }}>
+      {/* Kategoriyalar boshqaruvi */}
+      <section style={{ marginBottom: '30px', background: '#F3F5F8', padding: '20px', borderRadius: '8px' }}>
+        <h2>Kategoriyalar (Papka) boshqaruvi</h2>
+        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <input
             type="text"
-            placeholder="Masalan: Psixologiya"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #E1E5EB' }}
-            required
+            placeholder="Yangi kategoriya nomi"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            style={{ padding: '8px', flex: 1, borderRadius: '4px', border: '1px solid #E1E5EB' }}
           />
-          <button type="submit" style={{ background: '#3478F6', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer' }}>
+          <button type="submit" className="btn" style={{ padding: '8px 16px', background: '#3478F6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
             Qo'shish
           </button>
         </form>
+
+        <ul style={{ listStyle: 'none', padding: 0, marginTop: '15px' }}>
+          {categories.map((cat) => (
+            <li key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '10px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #E1E5EB' }}>
+              <span>{cat.name}</span>
+              <button 
+                onClick={() => handleDeleteCategory(cat.id)}
+                style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                O'chirish
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      {/* Kitob qo'shish */}
-      <section style={{ padding: '20px', background: '#F3F5F8', borderRadius: '8px' }}>
-        <h3 style={{ color: '#202938', marginTop: 0 }}>Yangi Kitob Qo'shish</h3>
-        <form onSubmit={handleAddBook} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <label style={{ color: '#202938', fontSize: '14px' }}>
-            Kategoriyani tanlang:
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #E1E5EB' }}
-              required
-            >
-              <option value="">-- Kategoriyani tanlang --</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ color: '#202938', fontSize: '14px' }}>
-            Kitob nomi:
-            <input 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-              style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #E1E5EB' }}
-              required 
-            />
-          </label>
-
-          <label style={{ color: '#202938', fontSize: '14px' }}>
-            Muallif:
-            <input 
-              value={author} 
-              onChange={(e) => setAuthor(e.target.value)} 
-              style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #E1E5EB' }}
-              required 
-            />
-          </label>
-
-          <label style={{ color: '#202938', fontSize: '14px' }}>
-            PDF Fayl:
-            <input 
-              type="file" 
-              accept=".pdf" 
-              onChange={(e) => setFile(e.target.files[0])} 
-              style={{ display: 'block', marginTop: '5px' }}
-              required 
-            />
-          </label>
-
-          <button 
-            type="submit" 
-            disabled={busy} 
-            style={{ background: '#3478F6', color: '#fff', border: 'none', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            {busy ? 'Yuklanmoqda...' : 'Kitobni saqlash'}
-          </button>
-        </form>
+      {/* Kitoblar ro'yxati */}
+      <section style={{ background: '#F3F5F8', padding: '20px', borderRadius: '8px' }}>
+        <h2>Kitoblar ro'yxati ({books.length} ta)</h2>
+        <div style={{ marginTop: '10px' }}>
+          {books.map((b) => (
+            <div key={b.id} style={{ background: '#fff', padding: '10px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #E1E5EB' }}>
+              <strong>{b.title}</strong> — <span style={{ color: '#657083' }}>{b.author}</span>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   )
