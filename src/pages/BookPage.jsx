@@ -135,12 +135,7 @@ export default function BookPage() {
         )}
 
         <div className="actions">
-          <a 
-            href={book.file_url} 
-            target="_blank" 
-            rel="noreferrer" 
-            className="btn"
-          >
+          <a href={book.file_url} target="_blank" rel="noreferrer" className="btn">
             {progress ? `Davom ettirish (${progress.page}-bet)` : "O'qishni boshlash"}
           </a>
         </div>
